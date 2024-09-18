@@ -235,6 +235,27 @@ app.delete("/api/production-reports/:id", async (req, res) => {
   }
 });
 
+// Route untuk mengambil production_report berdasarkan ID
+app.get("/api/production-reports/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query(
+      `SELECT pr.*, op_report.tanggal, op_report.grup, op_report.lokasi
+       FROM production_report pr
+       JOIN operation_report op_report ON pr.operation_report_id = op_report.id
+       WHERE pr.id = $1`,
+      [id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Laporan produksi tidak ditemukan" });
+    }
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error("Error fetching production report", error);
+    res.status(500).json({ error: "Terjadi kesalahan saat mengambil data laporan produksi" });
+  }
+});
+
 // Route untuk mengupdate production_report
 app.put("/api/production-reports/:id", async (req, res) => {
   const { id } = req.params;
@@ -270,27 +291,6 @@ app.put("/api/production-reports/:id", async (req, res) => {
   } catch (error) {
     console.error("Error updating production report", error);
     res.status(500).json({ error: "Terjadi kesalahan saat mengupdate laporan produksi" });
-  }
-});
-
-// Route untuk mengambil production_report berdasarkan ID
-app.get("/api/production-reports/:id", async (req, res) => {
-  const { id } = req.params;
-  try {
-    const result = await pool.query(
-      `SELECT pr.*, op_report.tanggal, op_report.grup, op_report.lokasi
-       FROM production_report pr
-       JOIN operation_report op_report ON pr.operation_report_id = op_report.id
-       WHERE pr.id = $1`,
-      [id]
-    );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: "Laporan produksi tidak ditemukan" });
-    }
-    res.json(result.rows[0]);
-  } catch (error) {
-    console.error("Error fetching production report", error);
-    res.status(500).json({ error: "Terjadi kesalahan saat mengambil data laporan produksi" });
   }
 });
 
@@ -461,6 +461,7 @@ app.get("/api/hourmeter-reports/:id", async (req, res) => {
   }
 });
 
+
 // Route untuk mengupdate hourmeter_report
 app.put("/api/hourmeter-reports/:id", async (req, res) => {
   const { id } = req.params;
@@ -497,4 +498,8 @@ app.put("/api/hourmeter-reports/:id", async (req, res) => {
     console.error("Error updating hourmeter report", error);
     res.status(500).json({ error: "Terjadi kesalahan saat mengupdate laporan hour meter" });
   }
+});
+
+app.listen(port, () => {
+  console.log(`Server running at http://localhost:${port}`);
 });
