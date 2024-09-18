@@ -212,6 +212,29 @@ app.get("/api/production-reports", async (req, res) => {
   }
 });
 
+// Route untuk menghapus production_report
+app.delete("/api/production-reports/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await pool.query(
+      "DELETE FROM production_report WHERE id = $1 RETURNING *",
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Laporan produksi tidak ditemukan" });
+    }
+
+    res.json({ message: "Laporan produksi berhasil dihapus", deletedReport: result.rows[0] });
+  } catch (error) {
+    console.error("Error deleting production report", error);
+    res.status(500).json({
+      error: "Terjadi kesalahan saat menghapus laporan produksi",
+    });
+  }
+});
+
 // Route untuk menambahkan hourmeter_report
 app.post("/api/hourmeter-reports", async (req, res) => {
   const { operation_report_id, equipment, hm_awal, hm_akhir, jam_lain, breakdown, no_operator, hujan, ket } = req.body;
@@ -334,6 +357,30 @@ app.get("/api/hourmeter-reports", async (req, res) => {
     });
   }
 });
+
+// Route untuk menghapus hourmeter_report
+app.delete("/api/hourmeter-reports/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await pool.query(
+      "DELETE FROM hourmeter_report WHERE id = $1 RETURNING *",
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Laporan hour meter tidak ditemukan" });
+    }
+
+    res.json({ message: "Laporan hour meter berhasil dihapus", deletedReport: result.rows[0] });
+  } catch (error) {
+    console.error("Error deleting hour meter report", error);
+    res.status(500).json({
+      error: "Terjadi kesalahan saat menghapus laporan hour meter",
+    });
+  }
+});
+
 
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
