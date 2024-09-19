@@ -364,12 +364,13 @@ app.post("/api/hourmeter-reports", async (req, res) => {
   }
 });
 
-// Route untuk menampilkan data hourmeter_report dengan relasi ke operation_report
 app.get("/api/hourmeter-reports", async (req, res) => {
   try {
-    const { startDate, endDate, grup, lokasi } = req.query;
+    const { startDate, endDate, grup, lokasi, shift } = req.query;
+    console.log('Received query params:', { startDate, endDate, grup, lokasi, shift }); // Log parameter yang diterima
+
     let query = `
-      SELECT hr.*, op_report.tanggal, op_report.grup, op_report.lokasi
+      SELECT hr.*, op_report.tanggal, op_report.grup, op_report.lokasi, op_report.shift
       FROM hourmeter_report hr
       JOIN operation_report op_report ON hr.operation_report_id = op_report.id
     `;
@@ -388,13 +389,18 @@ app.get("/api/hourmeter-reports", async (req, res) => {
     }
 
     if (grup) {
-      whereClause.push(`op_report.grup = $${params.length + 1}`);
+      whereClause.push(`LOWER(op_report.grup) = LOWER($${params.length + 1})`);
       params.push(grup);
     }
 
     if (lokasi) {
-      whereClause.push(`op_report.lokasi = $${params.length + 1}`);
+      whereClause.push(`LOWER(op_report.lokasi) = LOWER($${params.length + 1})`);
       params.push(lokasi);
+    }
+
+    if (shift) {
+      whereClause.push(`LOWER(op_report.shift) = LOWER($${params.length + 1})`);
+      params.push(shift);
     }
 
     if (whereClause.length > 0) {
@@ -407,7 +413,9 @@ app.get("/api/hourmeter-reports", async (req, res) => {
     console.log('With parameters:', params);
 
     const result = await pool.query(query, params);
-    console.log('Query result:', JSON.stringify(result.rows, null, 2));
+    console.log(`Query returned ${result.rows.length} rows`);
+    console.log('First few results:', result.rows.slice(0, 3)); // Log beberapa hasil pertama
+
     res.json(result.rows);
   } catch (error) {
     console.error("Error fetching hourmeter reports", error);
@@ -445,7 +453,7 @@ app.get("/api/hourmeter-reports/:id", async (req, res) => {
   const { id } = req.params;
   try {
     const result = await pool.query(
-      `SELECT hr.*, op_report.tanggal, op_report.grup, op_report.lokasi
+      `SELECT hr.*, op_report.tanggal, op_report.grup, op_report.lokasi, op_report.shift
        FROM hourmeter_report hr
        JOIN operation_report op_report ON hr.operation_report_id = op_report.id
        WHERE hr.id = $1`,
